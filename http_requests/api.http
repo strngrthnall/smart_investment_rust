@@ -1,0 +1,58 @@
+### Simple GET
+GET http://0.0.0.0:8000/api/assets
+Accept: application/json
+
+
+### POST Authorized
+POST http://0.0.0.0:8000/api/assets
+Accept: application/json
+Authorization: admin
+Content-Type: application/json
+
+{
+    "name": "Bitcoin",
+    "unit_value": 10
+}
+
+### POST Missing Authorization Header
+POST http://0.0.0.0:8000/api/assets
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "Bitcoin",
+  "unit_value": 10
+}
+
+### POST Invalid Credentials
+POST http://0.0.0.0:8000/api/assets
+Accept: application/json
+Authorization: asdasd
+Content-Type: application/json
+
+{
+  "name": "Bitcoin",
+  "unit_value": 10
+}
+
+### PATCH Authorized
+PATCH http://0.0.0.0:8000/api/assets
+Accept: application/json
+Authorization: admin
+Content-Type: application/json
+
+{
+  "id": 1,
+  "unit_value": 20
+}
+
+### PATCH Asset Does Not Exists
+PATCH http://0.0.0.0:8000/api/assets
+Accept: application/json
+Authorization: admin
+Content-Type: application/json
+
+{
+  "id": 2,
+  "unit_value": 20
+}
