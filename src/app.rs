@@ -49,6 +49,7 @@ impl App {
         let listener = TcpListener::bind("0.0.0.0:8000").await?;
         let router = Router::new()
             .nest("/api", routes::api::router())
+            .merge(routes::frontend::router())
             .with_state(state);
 
         info!("Starting service");
