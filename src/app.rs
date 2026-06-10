@@ -1,35 +1,25 @@
-use std::{
-    env
-};
+use std::env;
 
 use axum::Router;
 use sqlx::PgPool;
-use tokio::{
-    net::TcpListener,
-};
+use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::{
-    fmt::format::FmtSpan,
-    Layer,
-    layer::SubscriberExt,
-    util::SubscriberInitExt
+    Layer, fmt::format::FmtSpan, layer::SubscriberExt, util::SubscriberInitExt,
 };
-
 
 use crate::routes;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: PgPool
+    pub db: PgPool,
 }
 
 impl AppState {
     async fn new() -> color_eyre::Result<Self> {
         let database_url = env::var("DATABASE_URL")?;
         let db = PgPool::connect(&database_url).await?;
-        Ok(Self {
-            db
-        })
+        Ok(Self { db })
     }
 }
 

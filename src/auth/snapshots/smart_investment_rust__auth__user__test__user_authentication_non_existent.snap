@@ -1,0 +1,5 @@
+---
+source: src/auth/user.rs
+expression: err
+---
+UserDoesNotExists

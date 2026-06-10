@@ -1,0 +1,5 @@
+---
+source: src/auth/admin.rs
+expression: admin
+---
+Admin

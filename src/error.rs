@@ -1,10 +1,10 @@
 use axum::{
-    http::StatusCode,
     Json,
-    response::{IntoResponse, Response}
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
-use thiserror::Error;
 use serde::Serialize;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -26,21 +26,21 @@ pub enum AppError {
 
 #[derive(Serialize)]
 pub struct ErrorResponse {
-    error: String
+    error: String,
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-       let error_response = ErrorResponse {
-           error: self.to_string()
-       };
-        
-        let status = match self {  
+        let error_response = ErrorResponse {
+            error: self.to_string(),
+        };
+
+        let status = match self {
             Self::MissingAuthorization => StatusCode::BAD_REQUEST,
             Self::AssetDoesNotExists | Self::UserDoesNotExists => StatusCode::NOT_FOUND,
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::UserNameTaken => StatusCode::CONFLICT,
-            Self::Template(_) | Self::Database(_) => StatusCode::INTERNAL_SERVER_ERROR
+            Self::Template(_) | Self::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         (status, Json(error_response)).into_response()
