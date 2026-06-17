@@ -1,0 +1,9 @@
+---
+source: tests/routes/api.rs
+expression: updated
+---
+{
+  "id": 1,
+  "name": "Bitcoin",
+  "unit_value": 42.0
+}

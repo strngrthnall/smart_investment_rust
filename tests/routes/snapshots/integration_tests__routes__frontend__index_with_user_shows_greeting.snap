@@ -1,0 +1,5 @@
+---
+source: tests/routes/frontend.rs
+expression: body_str
+---
+hello, marcos

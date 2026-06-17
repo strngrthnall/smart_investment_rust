@@ -1,0 +1,5 @@
+---
+source: tests/auth/user.rs
+expression: err
+---
+MissingAuthorization

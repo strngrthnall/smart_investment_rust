@@ -1,8 +1,0 @@
----
-source: src/auth/user.rs
-expression: user
----
-{
-  "id": 1,
-  "username": "auth_user"
-}

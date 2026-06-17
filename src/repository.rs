@@ -77,6 +77,16 @@ impl Repository {
         .fetch_optional(&self.db)
         .await
     }
+
+    pub async fn get_user_by_id(&self, id: i64) -> sqlx::Result<Option<UserRecord>> {
+        sqlx::query_as!(
+            UserRecord,
+            "SELECT id, username, password_hash FROM users WHERE id = $1;",
+            id
+        )
+        .fetch_optional(&self.db)
+        .await
+    }
 }
 
 impl FromRequestParts<AppState> for Repository {
@@ -92,7 +102,6 @@ impl FromRequestParts<AppState> for Repository {
     }
 }
 
-#[cfg(test)]
 impl From<PgPool> for Repository {
     fn from(db: PgPool) -> Self {
         Self { db }

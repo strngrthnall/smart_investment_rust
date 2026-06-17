@@ -1,0 +1,9 @@
+---
+source: tests/routes/api.rs
+expression: updated
+---
+{
+  "id": 1,
+  "name": "Litecoin",
+  "unit_value": 10.0
+}

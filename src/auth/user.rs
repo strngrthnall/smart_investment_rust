@@ -1,5 +1,30 @@
-use crate::{error::AppError, repository::Repository};
+use std::convert::Infallible;
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+use axum_extra::extract::CookieJar;
+use jwt_simple::algorithms::MACLike;
+use jwt_simple::claims::Claims;
+use jwt_simple::prelude::{Duration, HS256Key};
 use password_auth::VerifyError;
+
+use crate::app::AppState;
+use crate::{error::AppError, repository::Repository};
+
+const SECRET_KEY: &[u8] = b"0100010001101111011000110110010100100000011011011100001110100011\
+                            0110010100101100001000000110010001101111011000110110010100100000\
+                            0110110111000011101000110110010100101100001000000110110101100001\
+                            0110111001100100011001010010000001110011011101010110000100100000\
+                            0110001101110010011010010110000101101110110000111010011101100001\
+                            0010000001110000011000010111001001100001001000000110110101101001\
+                            0110110100101100001000000111000001101111011010010111001100100000\
+                            0110111101110011001000000111000001100101011000110110000101100100\
+                            0110111101110011001000000110010001101111011100110010000001101001\
+                            0110111001100100011010010110011101101110011011110111001100100000\
+                            0110010001100101011101100110010101101101001000000111001101100101\
+                            0111001000100000011000100110000101110100011010010111101001100001\
+                            0110010001101111011100110010000001100101011011010010000001110011\
+                            0110000101101110011001110111010101100101001000000110010100100000\
+                            0110110101100101011001000110111100101110";
 
 pub struct UnauthenticatedUser {
     username: String,
@@ -7,7 +32,7 @@ pub struct UnauthenticatedUser {
 }
 
 impl UnauthenticatedUser {
-    pub(crate) fn new(username: String, password: String) -> UnauthenticatedUser {
+    pub fn new(username: String, password: String) -> UnauthenticatedUser {
         UnauthenticatedUser { username, password }
     }
 
@@ -54,7 +79,7 @@ pub struct User {
 }
 
 impl User {
-    fn new(id: i64, username: String) -> Self {
+    pub fn new(id: i64, username: String) -> Self {
         User { id, username }
     }
 
@@ -65,114 +90,58 @@ impl User {
     pub const fn id(&self) -> &i64 {
         &self.id
     }
+
+    pub fn auth_token(self) -> Result<String, AppError> {
+        let key = HS256Key::from_bytes(SECRET_KEY);
+        let claims = Claims::with_custom_claims(UserClaims::from(self), Duration::from_mins(10));
+        let token = key.authenticate(claims)?;
+        Ok(token)
+    }
+
+    pub fn from_auth_token(token: &str) -> Result<Self, AppError> {
+        let key = HS256Key::from_bytes(SECRET_KEY);
+        let claims: UserClaims = key.verify_token(token, None)?.custom;
+        Ok(Self::new(claims.id, claims.username))
+    }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::error::AppError;
-    use crate::repository::Repository;
-    use sqlx::PgPool;
+impl FromRequestParts<AppState> for User {
+    type Rejection = AppError;
 
-    #[sqlx::test]
-    async fn test_check_new_user_success(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("new_user".to_string(), "pass".to_string());
-        unauth
-            .check_new_user(&repository)
-            .await
-            .expect("username should be free");
+    async fn from_request_parts(
+        parts: &mut Parts,
+        _state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let jar = CookieJar::from_headers(&parts.headers);
+
+        let token = match jar.get("token") {
+            Some(token) => token.value(),
+            None => return Err(AppError::MissingAuthorization),
+        };
+
+        User::from_auth_token(token)
     }
+}
 
-    #[sqlx::test]
-    async fn test_check_new_user_already_exists(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("existing_user".to_string(), "pass".to_string());
-        unauth
-            .register(&repository)
-            .await
-            .expect("registration should succeed");
+impl FromRequestParts<AppState> for Option<User> {
+    type Rejection = Infallible;
 
-        let duplicate_check =
-            UnauthenticatedUser::new("existing_user".to_string(), "other_pass".to_string());
-        let err = duplicate_check
-            .check_new_user(&repository)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, AppError::UserNameTaken));
-        insta::assert_debug_snapshot!(err);
+    async fn from_request_parts(
+        parts: &mut Parts, 
+        state: &AppState
+    ) -> Result<Self, Self::Rejection> {
+        Ok(User::from_request_parts(parts, state).await.ok())
     }
+}
 
-    #[sqlx::test]
-    async fn test_user_registration_success(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("reg_user".to_string(), "pass".to_string());
-        let user = unauth
-            .register(&repository)
-            .await
-            .expect("registration should succeed");
-        assert_eq!(user.username(), "reg_user");
-        insta::assert_json_snapshot!(user);
-    }
+#[derive(serde::Serialize, serde::Deserialize)]
+struct UserClaims {
+    id: i64,
+    username: String,
+}
 
-    #[sqlx::test]
-    async fn test_user_registration_duplicate(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("reg_dup".to_string(), "pass".to_string());
-        unauth
-            .register(&repository)
-            .await
-            .expect("first registration should succeed");
-
-        let duplicate = UnauthenticatedUser::new("reg_dup".to_string(), "other_pass".to_string());
-        let err = duplicate.register(&repository).await.unwrap_err();
-        assert!(matches!(err, AppError::UserNameTaken));
-        insta::assert_debug_snapshot!(err);
-    }
-
-    #[sqlx::test]
-    async fn test_user_authentication_success(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("auth_user".to_string(), "pass123".to_string());
-        unauth
-            .register(&repository)
-            .await
-            .expect("registration should succeed");
-
-        let unauth_login = UnauthenticatedUser::new("auth_user".to_string(), "pass123".to_string());
-        let user = unauth_login
-            .authenticate(&repository)
-            .await
-            .expect("auth should succeed");
-        assert_eq!(user.username(), "auth_user");
-        insta::assert_json_snapshot!(user);
-    }
-
-    #[sqlx::test]
-    async fn test_user_authentication_invalid_password(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("auth_wrong_pw".to_string(), "pass123".to_string());
-        unauth
-            .register(&repository)
-            .await
-            .expect("registration should succeed");
-
-        let unauth_login =
-            UnauthenticatedUser::new("auth_wrong_pw".to_string(), "wrong_pass".to_string());
-        let err = unauth_login
-            .authenticate(&repository)
-            .await
-            .unwrap_err();
-        assert!(matches!(err, AppError::InvalidCredentials));
-        insta::assert_debug_snapshot!(err);
-    }
-
-    #[sqlx::test]
-    async fn test_user_authentication_non_existent(db: PgPool) {
-        let repository = Repository::from(db);
-        let unauth = UnauthenticatedUser::new("non_existent".to_string(), "pass123".to_string());
-        let err = unauth.authenticate(&repository).await.unwrap_err();
-        assert!(matches!(err, AppError::UserDoesNotExists));
-        insta::assert_debug_snapshot!(err);
+impl From<User> for UserClaims {
+    fn from(User { id, username }: User) -> Self {
+        Self { id, username }
     }
 }

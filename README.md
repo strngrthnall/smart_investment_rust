@@ -108,7 +108,7 @@ Para elevar a maturidade do projeto e demonstrar maestria técnica na plataforma
 ### 🔑 2. Implementação de Cookies & JWT
 * **Sessões Stateless**: Integração da crate `jwt-simple` para emissão de JSON Web Tokens no login de usuários.
 * **Segurança no Transporte**: Utilização da crate `axum-extra` para disponibilizar cookies assinados (`Cookie-signed`), utilizando as flags `HttpOnly`, `Secure` e `SameSite=Strict` para mitigar ataques de XSS e CSRF.
-* **Guards de Autenticação**: Substituição do mock de autenticação atual por um extractor `UserContext` / `CurrentUser` dinâmico baseado em token JWT extraído do Cookie ou Header.
+* **Guards de Autenticação**: Substituição do mock de autenticação atual por um extrator `UserContext` / `CurrentUser` dinâmico baseado em token JWT extraído do Cookie ou Header.
 
 ### 📊 3. Dashboards e Templates Dinâmicos com Askama
 * **Server-Side Rendering (SSR)**: Implementação de páginas dinâmicas para o dashboard da aplicação.

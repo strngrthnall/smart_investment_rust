@@ -1,3 +1,7 @@
+---
+source: tests/routes/frontend.rs
+expression: response.0
+---
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-full bg-slate-950">
 <head>
@@ -54,25 +58,17 @@
         <!-- Glassmorphism Card -->
         <div class="glass-card rounded-2xl p-8 shadow-2xl shadow-black/40">
             <form action="/login" method="POST" class="space-y-6">
-                {% if let Some(error) = error_message %}
-                <!-- Error Alert -->
-                <div class="p-3 bg-red-500/10 border border-red-500/20 text-red-200 text-xs rounded-xl flex items-center gap-2">
-                    <svg class="h-4 w-4 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                    <span>{{ error }}</span>
-                </div>
-                {% endif %}
+                
 
-                {% if let Some(success) = success_message %}
+                
                 <!-- Success Alert -->
                 <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 text-xs rounded-xl flex items-center gap-2">
                     <svg class="h-4 w-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>{{ success }}</span>
+                    <span>Usuário criado com sucesso</span>
                 </div>
-                {% endif %}
+                
 
                 <!-- Username Input -->
                 <div>

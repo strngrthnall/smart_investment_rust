@@ -22,6 +22,8 @@ pub enum AppError {
     Database(#[from] sqlx::Error),
     #[error(transparent)]
     Template(#[from] askama::Error),
+    #[error(transparent)]
+    Jwt(#[from] jwt_simple::Error),
 }
 
 #[derive(Serialize)]
@@ -40,7 +42,9 @@ impl IntoResponse for AppError {
             Self::AssetDoesNotExists | Self::UserDoesNotExists => StatusCode::NOT_FOUND,
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::UserNameTaken => StatusCode::CONFLICT,
-            Self::Template(_) | Self::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Template(_) | Self::Database(_) | Self::Jwt(_) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         };
 
         (status, Json(error_response)).into_response()
