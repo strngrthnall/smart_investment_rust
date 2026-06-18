@@ -11,18 +11,8 @@ Uma API RESTful de alta performance e segurança de tipos para consolidação e 
 
 ## 🏗️ Arquitetura e Padrões de Projeto
 
-A arquitetura do projeto foi estruturada para garantir o **desacoplamento**, a **testabilidade** e a **extensibilidade**, aplicando conceitos de arquiteturas limpas e em camadas:
+A arquitetura do projeto foi estruturada para garantir o **desacoplamento**, a **testabilidade** e a **extensibilidade**, aplicando conceitos de arquiteturas limpas e em camadas
 
-```mermaid
-graph TD
-    Client[Client Request] -->|HTTP / JSON| Router[Axum Router]
-    Router -->|Extractors / Guards| Auth["Auth Layer: Admin"]
-    Router -->|Extractors / DB State| Handlers["Axum Handlers/Routes"]
-    Handlers -->|Repository Trait/Struct| Repo[Repository Layer]
-    Repo -->|Compile-time checked SQL| DB[(PostgreSQL)]
-    Handlers -->|Error propagation| Err[AppError Layer]
-    Err -->|IntoResponse / JSON| Client
-```
 
 ### Detalhamento das Camadas
 
