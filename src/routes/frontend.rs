@@ -8,14 +8,17 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use axum_extra::extract::cookie::Cookie;
 use serde::Deserialize;
-
+use tokio::try_join;
 use crate::auth::user::{UnauthenticatedUser, User};
+use crate::models::{Asset, OwnedAsset};
 
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("/", get(index))
         .route("/login", get(login_page).post(login))
         .route("/create_user", get(create_user_page).post(create_user))
-        .route("/", get(index))
+        .route("/logout", get(logout))
+        .route("/assets", get(assets).post(purchase_asset))
 }
 
 #[derive(Template)]
@@ -109,9 +112,73 @@ pub async fn create_user(
     Ok(Html(login_page_html))
 }
 
-pub async fn index(maybe_user: Option<User>) -> Result<Response, AppError> {
+pub async fn index(maybe_user: Option<User>) -> Result<Redirect, AppError> {
     match maybe_user {
-        Some(user) => Ok(Html(format!("hello, {}", user.username())).into_response()),
-        None => Ok(Redirect::to("/login").into_response()),
+        Some(_) => Ok(Redirect::to("/assets")),
+        None => Ok(Redirect::to("/login")),
     }
+}
+
+pub async fn logout(jar: CookieJar) -> impl IntoResponse {
+    (jar.remove("token"), Redirect::to("/login"))
+}
+
+#[derive(Template)]
+#[template(path = "assets.html")]
+pub struct AssetsPage {
+    owned_assets: Vec<OwnedAsset>,
+    available_assets: Vec<Asset>,
+    user: User,
+    total_value: f64,
+    total_delta: f64,
+}
+
+pub async fn assets(repository: Repository, user: User) -> Result<Html<String>, AppError> {
+    // Sync assets cotações (will check throttling inside)
+    crate::routes::api::sync_assets_with_api(&repository).await?;
+
+    let (owned_assets, available_assets) = try_join!(
+        repository.list_owned_assets(user.id()),
+        repository.list_assets()
+    )?;
+
+    let mut total_value = 0.0;
+    let mut total_delta = 0.0;
+    for asset in &owned_assets {
+        total_value += asset.unit_value * asset.quantity_owned;
+        total_delta += asset.value_delta;
+    }
+
+    let html = AssetsPage {
+        owned_assets,
+        available_assets,
+        user,
+        total_value,
+        total_delta,
+    }.render()?;
+
+    Ok(Html(html))
+}
+
+#[derive(Deserialize)]
+pub struct PurchaseAssetForm {
+    pub asset_id: i64,
+    pub unit_value: f64,
+    pub quantity: f64,
+}
+
+pub async fn purchase_asset(
+    repository: Repository,
+    user: User,
+    Form(request): Form<PurchaseAssetForm>
+) -> Result<Redirect, AppError> {
+    repository
+        .insert_owned_asset(
+            user.id(),
+            request.asset_id,
+            request.quantity,
+            request.unit_value,
+        ).await?;
+
+    Ok(Redirect::to("/assets"))
 }

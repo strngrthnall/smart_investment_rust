@@ -1,0 +1,9 @@
+---
+source: tests/repository.rs
+expression: found
+---
+UserRecord {
+    id: 1,
+    username: "lookup_user",
+    password_hash: "hash",
+}

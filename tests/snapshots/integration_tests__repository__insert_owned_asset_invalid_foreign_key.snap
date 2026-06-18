@@ -1,0 +1,7 @@
+---
+source: tests/repository.rs
+expression: constraint
+---
+Some(
+    "owned_assets_user_id_fkey",
+)

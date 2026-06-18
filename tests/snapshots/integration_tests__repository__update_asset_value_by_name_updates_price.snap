@@ -1,10 +1,10 @@
 ---
-source: tests/routes/api.rs
+source: tests/repository.rs
 expression: updated
 ---
 {
   "id": 1,
   "name": "Bitcoin",
-  "unit_value": 10.0,
+  "unit_value": 350000.0,
   "updated_at": "[datetime]"
 }

@@ -110,8 +110,9 @@ async fn test_user_authentication_non_existent(db: PgPool) {
 #[test]
 fn test_id_getter() {
     let user = User::new(42, "marcos".to_string());
-    assert_eq!(user.id(), &42);
+    assert_eq!(user.id(), 42);
     assert_eq!(user.username(), "marcos");
+    insta::assert_json_snapshot!(user);
 }
 
 #[test]
@@ -121,14 +122,16 @@ fn test_auth_token_round_trip() {
         .expect("should issue a token");
 
     let user = User::from_auth_token(&token).expect("should decode the token");
-    assert_eq!(user.id(), &7);
+    assert_eq!(user.id(), 7);
     assert_eq!(user.username(), "alice");
+    insta::assert_json_snapshot!(user);
 }
 
 #[test]
 fn test_from_auth_token_invalid() {
     let err = User::from_auth_token("not-a-valid-token").unwrap_err();
     assert!(matches!(err, AppError::Jwt(_)));
+    insta::assert_debug_snapshot!(err);
 }
 
 #[sqlx::test]
@@ -155,6 +158,7 @@ async fn test_user_extractor_invalid_token(db: PgPool) {
         .await
         .unwrap_err();
     assert!(matches!(err, AppError::Jwt(_)));
+    insta::assert_debug_snapshot!(err);
 }
 
 #[sqlx::test]
@@ -172,8 +176,9 @@ async fn test_user_extractor_valid_token(db: PgPool) {
     let user = User::from_request_parts(&mut parts, &state)
         .await
         .expect("should extract user from cookie");
-    assert_eq!(user.id(), &7);
+    assert_eq!(user.id(), 7);
     assert_eq!(user.username(), "alice");
+    insta::assert_json_snapshot!(user);
 }
 
 #[sqlx::test]
@@ -187,6 +192,7 @@ async fn test_option_user_extractor_none(db: PgPool) {
         .await
         .expect("Option extractor is infallible");
     assert!(maybe_user.is_none());
+    insta::assert_json_snapshot!(maybe_user);
 }
 
 #[sqlx::test]
@@ -206,6 +212,7 @@ async fn test_option_user_extractor_some(db: PgPool) {
     )
         .await
         .expect("Option extractor is infallible");
+    insta::assert_json_snapshot!(maybe_user);
     let user = maybe_user.expect("should contain a user");
     assert_eq!(user.username(), "alice");
 }

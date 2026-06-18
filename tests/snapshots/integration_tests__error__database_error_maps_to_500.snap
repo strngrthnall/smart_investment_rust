@@ -1,0 +1,5 @@
+---
+source: tests/error.rs
+expression: body_string(response).await
+---
+{"error":"no rows returned by a query that expected to return at least one row"}

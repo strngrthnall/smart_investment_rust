@@ -1,0 +1,227 @@
+---
+source: tests/routes/frontend.rs
+expression: response.0
+---
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Investment - Carteira</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-full font-sans antialiased text-slate-200 relative pb-16">
+    
+    <!-- Background Decorative Gradients -->
+    <div class="absolute top-[-200px] left-[-100px] w-[600px] h-[600px] rounded-full bg-violet-600/10 blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-[0px] right-[-100px] w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
+
+    <!-- Navigation Header -->
+    <header class="w-full glass-card sticky top-0 z-50 border-b border-white/5 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-md">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                    Smart Investment
+                </span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="text-sm text-slate-300">
+                    Olá, <span class="font-semibold text-violet-400">portfolio_user</span>!
+                </div>
+                <a href="/logout" class="py-1.5 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium border border-slate-700/50 hover:border-slate-600 transition duration-150">
+                    Sair
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 z-10 relative">
+
+        <!-- Overview Dashboard Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-card rounded-2xl p-6 shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Patrimônio Atual</p>
+                <p class="text-3xl font-bold text-white mt-2">R$ 0.00</p>
+                <div class="text-xs text-slate-500 mt-1">Soma de todos os ativos sob custódia</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Rendimento Total</p>
+                <p class="text-3xl font-bold mt-2 text-emerald-400">
+                    R$ +0.00
+                </p>
+                <div class="text-xs text-slate-500 mt-1">Retorno histórico sobre valor investido</div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 shadow-lg flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ativos em Carteira</p>
+                    <p class="text-3xl font-bold text-white mt-2">0</p>
+                </div>
+                <div class="text-xs text-slate-500 mt-1">Diversificação do portfólio</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left 2 Columns: Portfolio / Owned Assets -->
+            <div class="lg:col-span-2 space-y-6">
+                <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Minha Carteira
+                </h2>
+
+                
+                <div class="glass-card rounded-2xl p-12 text-center">
+                    <svg class="w-12 h-12 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4m16 0h-1.5m-13 0h1.5m1.5-12v12"></path>
+                    </svg>
+                    <p class="text-slate-400">Você ainda não possui nenhum ativo na sua carteira.</p>
+                    <p class="text-xs text-slate-500 mt-1">Compre ativos no menu ao lado para iniciar seus investimentos.</p>
+                </div>
+                
+            </div>
+
+            <!-- Right 1 Column: Buy Assets Form -->
+            <div class="space-y-6">
+                <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Comprar Ativos
+                </h2>
+
+                <div class="glass-card rounded-2xl p-6 shadow-lg">
+                    <form action="/assets" method="POST" id="buy-asset-form" class="space-y-4">
+                        <!-- Select Asset -->
+                        <div>
+                            <label for="asset_id" class="block text-sm font-medium text-slate-300 mb-2">Ativo Disponível</label>
+                            <select 
+                                name="asset_id" 
+                                id="asset_id" 
+                                required
+                                onchange="updateBuyFormMeta()"
+                                class="block w-full px-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500/80 focus:border-transparent transition text-sm cursor-pointer"
+                            >
+                                <option value="" disabled selected>Selecione um ativo...</option>
+                                
+                                <option value="1">
+                                    Bitcoin
+                                </option>
+                                
+                                <option value="2">
+                                    Ethereum
+                                </option>
+                                
+                            </select>
+                        </div>
+
+                        <!-- Price Input (Pre-filled when asset is selected, but editable) -->
+                        <div>
+                            <label for="unit_value" class="block text-sm font-medium text-slate-300 mb-2">Preço Unitário de Compra</label>
+                            <input 
+                                type="number" 
+                                name="unit_value" 
+                                id="unit_value" 
+                                required 
+                                min="0.000001" 
+                                step="any"
+                                placeholder="0.00"
+                                oninput="calculateTotal()"
+                                class="block w-full px-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/80 focus:border-transparent transition text-sm"
+                            >
+                        </div>
+
+                        <!-- Quantity input -->
+                        <div>
+                            <label for="quantity" class="block text-sm font-medium text-slate-300 mb-2">Quantidade</label>
+                            <input 
+                                type="number" 
+                                name="quantity" 
+                                id="quantity" 
+                                required 
+                                min="0.000001" 
+                                step="any"
+                                placeholder="0.00"
+                                oninput="calculateTotal()"
+                                class="block w-full px-4 py-2.5 bg-slate-900/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/80 focus:border-transparent transition text-sm"
+                            >
+                        </div>
+
+                        <!-- Total estimate (JS-Calculated) -->
+                        <div class="pt-2">
+                            <span class="block text-xs text-slate-400">Custo Total Estimado</span>
+                            <span id="display-total-cost" class="text-xl font-bold text-violet-400 mt-1 block">R$ 0,00</span>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button 
+                            type="submit"
+                            class="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium rounded-xl shadow-md transition duration-150 active:scale-[0.98] text-sm mt-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+                        >
+                            Confirmar Compra
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function updateBuyFormMeta() {
+            const selectEl = document.getElementById('asset_id');
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            
+            if (selectedOpt && !selectedOpt.disabled) {
+                const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0.0;
+                
+                // Pre-fill the editable unit value input
+                document.getElementById('unit_value').value = price;
+                
+                // Recalculate total
+                calculateTotal();
+            }
+        }
+
+        function calculateTotal() {
+            const price = parseFloat(document.getElementById('unit_value').value) || 0.0;
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0.0;
+            
+            const total = price * quantity;
+            document.getElementById('display-total-cost').innerText = 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    </script>
+</body>
+</html>

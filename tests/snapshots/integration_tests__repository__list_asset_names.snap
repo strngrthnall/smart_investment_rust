@@ -1,0 +1,8 @@
+---
+source: tests/repository.rs
+expression: names
+---
+[
+  "Bitcoin",
+  "Ethereum"
+]

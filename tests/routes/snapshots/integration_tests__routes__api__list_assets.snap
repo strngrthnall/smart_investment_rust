@@ -6,6 +6,7 @@ expression: assets
   {
     "id": 1,
     "name": "Bitcoin",
-    "unit_value": 10.0
+    "unit_value": 10.0,
+    "updated_at": "[datetime]"
   }
 ]

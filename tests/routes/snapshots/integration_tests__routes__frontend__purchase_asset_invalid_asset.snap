@@ -1,0 +1,7 @@
+---
+source: tests/routes/frontend.rs
+expression: constraint
+---
+Some(
+    "owned_assets_asset_id_fkey",
+)

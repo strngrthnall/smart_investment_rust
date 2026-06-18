@@ -48,6 +48,7 @@ async fn test_username_taken_maps_to_409() {
 async fn test_database_error_maps_to_500() {
     let response = AppError::Database(sqlx::Error::RowNotFound).into_response();
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    insta::assert_snapshot!(body_string(response).await);
 }
 
 #[tokio::test]
@@ -57,5 +58,14 @@ async fn test_jwt_error_maps_to_500() {
         smart_investment_rust::auth::user::User::from_auth_token("not-a-valid-token").unwrap_err();
     assert!(matches!(err, AppError::Jwt(_)));
     let response = err.into_response();
+    assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    insta::assert_snapshot!(body_string(response).await);
+}
+
+#[tokio::test]
+async fn test_reqwest_error_maps_to_500() {
+    // A malformed URL produces a reqwest error without any network I/O.
+    let reqwest_err = reqwest::get("not-a-valid-url").await.unwrap_err();
+    let response = AppError::Reqwest(reqwest_err).into_response();
     assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }

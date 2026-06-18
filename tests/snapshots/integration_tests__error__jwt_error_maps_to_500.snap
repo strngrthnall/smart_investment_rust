@@ -1,0 +1,5 @@
+---
+source: tests/error.rs
+expression: body_string(response).await
+---
+{"error":"JWT compact encoding error"}

@@ -1,3 +1,5 @@
 /target
 .env
 checklist.md
+.idea/
+REGRAS_DE_NEGOCIO.md

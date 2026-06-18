@@ -6,7 +6,8 @@ use smart_investment_rust::{
     error::AppError,
     repository::Repository,
     routes::frontend::{
-        create_user, create_user_page, index, login, login_page, CreateUserForm, LoginForm,
+        assets, create_user, create_user_page, index, login, login_page, logout, purchase_asset,
+        CreateUserForm, LoginForm, PurchaseAssetForm,
     },
 };
 use sqlx::PgPool;
@@ -155,7 +156,10 @@ async fn test_login_wrong_password(db: PgPool) {
 
 #[sqlx::test]
 async fn test_index_no_user_redirects(_db: PgPool) {
-    let response = index(None).await.expect("index should succeed");
+    let response = index(None)
+        .await
+        .expect("index should succeed")
+        .into_response();
     assert_eq!(response.status(), axum::http::StatusCode::SEE_OTHER);
     assert_eq!(
         response
@@ -168,14 +172,190 @@ async fn test_index_no_user_redirects(_db: PgPool) {
 }
 
 #[sqlx::test]
-async fn test_index_with_user_shows_greeting(_db: PgPool) {
+async fn test_index_with_user_redirects_to_assets(_db: PgPool) {
     let user = User::new(42, "marcos".to_string());
-    let response = index(Some(user)).await.expect("index should succeed");
-    assert_eq!(response.status(), axum::http::StatusCode::OK);
-    let bytes = axum::body::to_bytes(response.into_body(), 1024 * 1024)
+    let response = index(Some(user))
         .await
-        .expect("failed to read body");
-    let body_str = String::from_utf8(bytes.to_vec()).expect("body is not utf-8");
-    assert!(body_str.contains("hello, marcos"));
-    insta::assert_snapshot!(body_str);
+        .expect("index should succeed")
+        .into_response();
+    assert_eq!(response.status(), axum::http::StatusCode::SEE_OTHER);
+    assert_eq!(
+        response
+            .headers()
+            .get(axum::http::header::LOCATION)
+            .unwrap(),
+        "/assets"
+    );
+    insta::assert_debug_snapshot!(response.status());
+}
+
+#[tokio::test]
+async fn test_logout_redirects_and_clears_cookie() {
+    // Build the jar from request headers so "token" is an original cookie; only
+    // then does removing it emit a clearing Set-Cookie.
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::COOKIE,
+        "token=existing-token".parse().unwrap(),
+    );
+    let jar = CookieJar::from_headers(&headers);
+    let response = logout(jar).await.into_response();
+    assert_eq!(response.status(), axum::http::StatusCode::SEE_OTHER);
+    assert_eq!(
+        response
+            .headers()
+            .get(axum::http::header::LOCATION)
+            .unwrap(),
+        "/login"
+    );
+    // Removing the cookie emits a clearing Set-Cookie for "token".
+    let set_cookie = response
+        .headers()
+        .get(axum::http::header::SET_COOKIE)
+        .unwrap();
+    assert!(set_cookie.to_str().unwrap().contains("token="));
+    insta::assert_debug_snapshot!(response.status());
+}
+
+#[sqlx::test]
+async fn test_assets_page_empty(db: PgPool) {
+    let repository = Repository::from(db);
+    let user_record = repository
+        .add_user("portfolio_user", "hash")
+        .await
+        .expect("should insert user");
+    // Assets are available to buy, but the user owns none yet.
+    repository
+        .create_asset("Bitcoin".to_string(), 100.0)
+        .await
+        .expect("should insert asset");
+    repository
+        .create_asset("Ethereum".to_string(), 50.0)
+        .await
+        .expect("should insert asset");
+
+    let user = User::new(user_record.id, "portfolio_user".to_string());
+    let response = assets(repository, user)
+        .await
+        .expect("should render assets page");
+
+    assert!(response.0.contains("portfolio_user"));
+    assert!(response.0.contains("Você ainda não possui nenhum ativo"));
+    assert!(response.0.contains("Bitcoin"));
+    assert!(response.0.contains("Ethereum"));
+    insta::assert_snapshot!(response.0);
+}
+
+#[sqlx::test]
+async fn test_assets_page_with_holdings(db: PgPool) {
+    let repository = Repository::from(db.clone());
+    let user_record = repository
+        .add_user("holder", "hash")
+        .await
+        .expect("should insert user");
+    let asset = repository
+        .create_asset("Bitcoin".to_string(), 100.0)
+        .await
+        .expect("should insert asset");
+
+    // Insert the holding with a fixed timestamp so the rendered purchase
+    // history is deterministic for snapshotting.
+    sqlx::query(
+        "INSERT INTO owned_assets (user_id, asset_id, bought_for, quantity_owned, timestamp)
+            VALUES ($1, $2, $3, $4, $5::timestamptz);",
+    )
+    .bind(user_record.id)
+    .bind(asset.id)
+    .bind(80.0_f64)
+    .bind(2.0_f64)
+    .bind("2024-01-15T12:00:00Z")
+    .execute(&db)
+    .await
+    .expect("should insert owned asset");
+
+    let user = User::new(user_record.id, "holder".to_string());
+    let response = assets(repository, user)
+        .await
+        .expect("should render assets page");
+
+    assert!(response.0.contains("Bitcoin"));
+    // total_value = current 100 * 2 units = 200
+    assert!(response.0.contains("R$ 200.00"));
+    // value_delta = (100 - 80) * 2 = +40
+    assert!(response.0.contains("R$ +40.00"));
+    insta::assert_snapshot!(response.0);
+}
+
+#[sqlx::test]
+async fn test_purchase_asset_success(db: PgPool) {
+    let repository = Repository::from(db.clone());
+    let user_record = repository
+        .add_user("buyer", "hash")
+        .await
+        .expect("should insert user");
+    let asset = repository
+        .create_asset("Bitcoin".to_string(), 100.0)
+        .await
+        .expect("should insert asset");
+
+    let form = PurchaseAssetForm {
+        asset_id: asset.id,
+        unit_value: 90.0,
+        quantity: 3.0,
+    };
+    let user = User::new(user_record.id, "buyer".to_string());
+    let response = purchase_asset(repository, user, Form(form))
+        .await
+        .expect("purchase should succeed")
+        .into_response();
+
+    assert_eq!(response.status(), axum::http::StatusCode::SEE_OTHER);
+    assert_eq!(
+        response
+            .headers()
+            .get(axum::http::header::LOCATION)
+            .unwrap(),
+        "/assets"
+    );
+
+    // The holding must have been persisted.
+    let owned = Repository::from(db)
+        .list_owned_assets(user_record.id)
+        .await
+        .expect("query should succeed");
+    assert_eq!(owned.len(), 1);
+    assert_eq!(owned[0].quantity_owned, 3.0);
+
+    insta::assert_debug_snapshot!(response.status());
+}
+
+#[sqlx::test]
+async fn test_purchase_asset_invalid_asset(db: PgPool) {
+    let repository = Repository::from(db);
+    let user_record = repository
+        .add_user("buyer2", "hash")
+        .await
+        .expect("should insert user");
+
+    let form = PurchaseAssetForm {
+        asset_id: 999_999,
+        unit_value: 90.0,
+        quantity: 1.0,
+    };
+    let user = User::new(user_record.id, "buyer2".to_string());
+    let err = match purchase_asset(repository, user, Form(form)).await {
+        Ok(_) => panic!("purchasing a non-existent asset should fail"),
+        Err(err) => err,
+    };
+    assert!(matches!(err, AppError::Database(_)));
+
+    // Snapshot the violated constraint name (stable across Postgres builds).
+    let constraint = match &err {
+        AppError::Database(db_err) => db_err
+            .as_database_error()
+            .and_then(|inner| inner.constraint())
+            .map(str::to_string),
+        _ => None,
+    };
+    insta::assert_debug_snapshot!(constraint);
 }

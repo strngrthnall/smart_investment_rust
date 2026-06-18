@@ -1,0 +1,21 @@
+---
+source: tests/repository.rs
+expression: owned
+---
+[
+  {
+    "id": 1,
+    "name": "Bitcoin",
+    "unit_value": 100.0,
+    "value_delta": 40.0,
+    "quantity_owned": 2.0,
+    "purchase_history": [
+      {
+        "bought_at": "[bought_at]",
+        "bought_for": 80.0,
+        "quantity_bought": 2.0,
+        "value_delta": 40.0
+      }
+    ]
+  }
+]

@@ -1,2 +1,2 @@
-INSERT INTO assets  (name, unit_value)
-VALUES ('Bitcoin', 10.0)
+INSERT INTO assets (name, unit_value, updated_at)
+VALUES ('Bitcoin', 10.0, NOW() - INTERVAL '25 hours');

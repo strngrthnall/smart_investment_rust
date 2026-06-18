@@ -1,0 +1,9 @@
+---
+source: tests/repository.rs
+expression: "(holding.quantity_owned, holding.value_delta,\nholding.purchase_history.0.len(),)"
+---
+(
+    3.0,
+    20.0,
+    2,
+)

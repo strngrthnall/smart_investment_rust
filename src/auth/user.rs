@@ -87,8 +87,8 @@ impl User {
         &self.username
     }
 
-    pub const fn id(&self) -> &i64 {
-        &self.id
+    pub const fn id(&self) -> i64 {
+        self.id
     }
 
     pub fn auth_token(self) -> Result<String, AppError> {

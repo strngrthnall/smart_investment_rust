@@ -1,0 +1,8 @@
+---
+source: tests/auth/user.rs
+expression: user
+---
+{
+  "id": 42,
+  "username": "marcos"
+}

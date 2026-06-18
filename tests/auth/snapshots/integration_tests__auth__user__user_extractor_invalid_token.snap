@@ -1,0 +1,7 @@
+---
+source: tests/auth/user.rs
+expression: err
+---
+Jwt(
+    CompactEncodingError,
+)

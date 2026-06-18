@@ -1,5 +1,5 @@
 ---
 source: tests/routes/frontend.rs
-expression: body_str
+expression: response.status()
 ---
-hello, marcos
+303
